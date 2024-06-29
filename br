@@ -23,8 +23,13 @@ edit_encrypted() {
 }
 
 make_journal_path() {
-  NAME=${1:-$($DATE)}
-  echo "${VAULT}/${PREFIX}${NAME}${SUFFIX}"
+  format=${JOURNAL_FORMAT}
+  if [ "$notemode" = 1 ]; then
+    format=${NOTE_FORMAT}
+  fi
+
+  name=$(echo "$format" | sed "s/%n/$1/" | sed "s+%d+$($DATE)+")
+  echo "${VAULT}/$name"
 }
 
 make_vault() {
@@ -41,7 +46,7 @@ set_encrypted_editor() {
 }
 
 search_vault() {
-  name=$(fd -tf --base-directory "$1" | fzf) || exit 1
+  name=$(fd -tf --base-directory "$1" $2 | fzf --tac) || exit 1
   if echo "$name" | grep '.gpg$'; then
     ENCRYPTED=1
   fi
@@ -70,25 +75,32 @@ print_help() {
   print "\t\tUse PAGER (less) instead of EDITOR"
   print "\t-e"
   print "\t\tEdit journal/note as encrypted"
+  print "\t-d"
+  print "\t\tPrint the path of current vault"
 }
 
 source_config "$@"
-while getopts "hn:sSle" option; do
+while getopts "hn:sSledj" option; do
   case $option in 
     h) 
       print_help
       exit;;
     n) 
       notemode=1
-      name=${OPTARG};;
+      NAME=${OPTARG};;
     s)
       search_vault "$VAULT";;
+    j)
+      search_vault "$VAULT" "--max-depth 1";;
     S)
       search_vault "$VAULT/notes";;
     l) 
       EDITOR=${PAGER:-less};;
     e) 
       ENCRYPTED=1;;
+    d) 
+      echo "$VAULT"
+      exit;;
     \?) 
       echo "Error: Invalid option"
       print_help
@@ -97,7 +109,7 @@ while getopts "hn:sSle" option; do
 done
 shift $((OPTIND - 1))
 make_vault "$@"
-FILE_PATH=${FILE_PATH:-$(make_journal_path "$name")}
+FILE_PATH=${FILE_PATH:-$(make_journal_path "$NAME")}
 if [ "$ENCRYPTED" = 1 ]; then
   set_encrypted_editor
 fi
