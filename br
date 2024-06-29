@@ -41,12 +41,11 @@ set_encrypted_editor() {
 }
 
 search_vault() {
-  if name=$(fd -tf --base-directory "$1" | fzf); then
-    if echo "$name" | grep '.gpg$'; then
-      ENCRYPTED=1
-    fi
-    FILE_PATH="$1/$name"
+  name=$(fd -tf --base-directory "$1" | fzf) || exit 1
+  if echo "$name" | grep '.gpg$'; then
+    ENCRYPTED=1
   fi
+  FILE_PATH="$1/$name"
 }
 
 print() {
