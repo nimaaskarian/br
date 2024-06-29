@@ -71,6 +71,8 @@ print_help() {
   print "\t\tSearch and open journals and notes inside current vault"
   print "\t-S"
   print "\t\tSearch and open only notes inside current vault"
+  print "\t-j"
+  print "\t\tSearch and open only journals inside current vault"
   print "\t-l"
   print "\t\tUse PAGER (less) instead of EDITOR"
   print "\t-e"
