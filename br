@@ -5,20 +5,16 @@ source_config() {
   if [ -f "$CONFIG_DIR/brrc" ]; then
     . $CONFIG_DIR/brrc
   fi
-
-  if [ "${ENCRYPTED}" = 1 ]; then
-    EDITOR_=$EDITOR
-    EDITOR=edit_encrypted
-  fi
 }
 
 edit_encrypted() {
+  name=$(printf "%s" "$1" | sed 's+.gpg$++')
   TMP=$(mktemp --suffix "$SUFFIX")
-  if [ -f "$1.gpg" ]; then
-    gpg -d "$1.gpg" > "$TMP"
+  if [ -f "$name.gpg" ]; then
+    gpg -d "$name.gpg" > "$TMP"
   fi
   $EDITOR_ "$TMP"
-  gpg --symmetric --output "$1.gpg" "$TMP"
+  gpg --symmetric --output "$name.gpg" "$TMP"
   rm "$TMP"
 }
 
@@ -35,6 +31,17 @@ make_vault() {
   mkdir "$VAULT" 2> /dev/null
 }
 
+set_encrypted_editor() {
+  EDITOR_=$EDITOR
+  EDITOR=edit_encrypted
+}
+
+search_vault() {
+  if name=$(fd -tf --base-directory "$1" | fzf); then
+    FILE_PATH="$1/$name"
+  fi
+}
+
 print() {
   printf "$*\n"
 }
@@ -48,7 +55,7 @@ print_help() {
 }
 
 source_config "$@"
-while getopts "hn:" option; do
+while getopts "hn:sSle" option; do
   case $option in 
     h) 
       print_help
@@ -56,6 +63,14 @@ while getopts "hn:" option; do
     n) 
       notemode=1
       name=${OPTARG};;
+    s)
+      search_vault "$VAULT";;
+    S)
+      search_vault "$VAULT/notes";;
+    l) 
+      EDITOR=${PAGER:-less};;
+    e) 
+      ENCRYPTED=1;;
     \?) 
       echo "Error: Invalid option"
       exit 1;;
@@ -63,6 +78,9 @@ while getopts "hn:" option; do
 done
 shift $((OPTIND - 1))
 make_vault "$@"
-FILE_PATH=$(make_journal_path "$name")
+FILE_PATH=${FILE_PATH:-$(make_journal_path "$name")}
+if [ "$ENCRYPTED" = 1 ]; then
+  set_encrypted_editor
+fi
 
 $EDITOR "$FILE_PATH"
