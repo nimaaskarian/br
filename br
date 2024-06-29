@@ -55,9 +55,21 @@ print() {
 print_help() {
   print "Usage:"
   print "\tbr [OPTIONS] [VAULT_PATH]"
+  print
   print "Arguments:"
   print "\t [VAULT_PATH] Path to vault directory"
+  print
   print "Options:"
+  print "\t-n <NOTE_NAME>"
+  print "\t\tEdit note inside VAULT/notes/<NOTE_NAME>"
+  print "\t-s"
+  print "\t\tSearch and open journals and notes inside current vault"
+  print "\t-S"
+  print "\t\tSearch and open only notes inside current vault"
+  print "\t-l"
+  print "\t\tUse PAGER (less) instead of EDITOR"
+  print "\t-e"
+  print "\t\tEdit journal/note as encrypted"
 }
 
 source_config "$@"
@@ -79,6 +91,7 @@ while getopts "hn:sSle" option; do
       ENCRYPTED=1;;
     \?) 
       echo "Error: Invalid option"
+      print_help
       exit 1;;
   esac
 done
