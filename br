@@ -13,8 +13,12 @@ edit_encrypted() {
   if [ -f "$name.gpg" ]; then
     gpg -d "$name.gpg" > "$TMP"
   fi
+  before=$(cat "$TMP")
   $EDITOR_ "$TMP"
-  gpg --symmetric --output "$name.gpg" "$TMP"
+  after=$(cat "$TMP")
+  if ! [ "$before" = "$after" ]; then
+    gpg --symmetric --output "$name.gpg" "$TMP"
+  fi
   rm "$TMP"
 }
 
