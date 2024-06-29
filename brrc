@@ -1,0 +1,6 @@
+EDITOR=${EDITOR:-vim}
+ENCRYPTED=0
+VAULT="$HOME/Documents/br-vault"
+DATE="date +%F"
+SUFFIX=".md"
+PREFIX=""

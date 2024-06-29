@@ -1,0 +1,35 @@
+#!/bin/sh
+CONFIG_DIR=${XDG_CONFIG_HOME:-${HOME}/.config}/br
+
+source_config() {
+  if [ -f "$CONFIG_DIR/brrc" ]; then
+    . $CONFIG_DIR/brrc
+  fi
+  VAULT=${1:-$VAULT}
+  if ! [ -d "$VAULT" ]; then
+    mkdir "$VAULT"
+  fi
+
+  if [ "${ENCRYPTED}" = 1 ]; then
+    EDITOR_=$EDITOR
+    EDITOR=edit_encrypted
+  fi
+}
+
+edit_encrypted() {
+  TMP=$(mktemp --suffix "$SUFFIX")
+  if [ -f "$1.gpg" ]; then
+    gpg -d "$1.gpg" > "$TMP"
+  fi
+  $EDITOR_ "$TMP"
+  gpg --symmetric --output "$1.gpg" "$TMP"
+  rm "$TMP"
+}
+
+make_journal_name() {
+  echo "${VAULT}/${PREFIX}$($DATE)${SUFFIX}"
+}
+
+source_config "$@"
+
+$EDITOR "$(make_journal_name)"
