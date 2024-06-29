@@ -5,10 +5,6 @@ source_config() {
   if [ -f "$CONFIG_DIR/brrc" ]; then
     . $CONFIG_DIR/brrc
   fi
-  VAULT=${1:-$VAULT}
-  if ! [ -d "$VAULT" ]; then
-    mkdir "$VAULT"
-  fi
 
   if [ "${ENCRYPTED}" = 1 ]; then
     EDITOR_=$EDITOR
@@ -26,10 +22,47 @@ edit_encrypted() {
   rm "$TMP"
 }
 
-make_journal_name() {
-  echo "${VAULT}/${PREFIX}$($DATE)${SUFFIX}"
+make_journal_path() {
+  NAME=${1:-$($DATE)}
+  echo "${VAULT}/${PREFIX}${NAME}${SUFFIX}"
+}
+
+make_vault() {
+  VAULT=${1:-$VAULT}
+  if [ "$notemode" = 1 ]; then
+    VAULT=$VAULT/notes
+  fi
+  mkdir "$VAULT" 2> /dev/null
+}
+
+print() {
+  printf "$*\n"
+}
+
+print_help() {
+  print "Usage:"
+  print "\tbr [OPTIONS] [VAULT_PATH]"
+  print "Arguments:"
+  print "\t [VAULT_PATH] Path to vault directory"
+  print "Options:"
 }
 
 source_config "$@"
+while getopts "hn:" option; do
+  case $option in 
+    h) 
+      print_help
+      exit;;
+    n) 
+      notemode=1
+      name=${OPTARG};;
+    \?) 
+      echo "Error: Invalid option"
+      exit 1;;
+  esac
+done
+shift $((OPTIND - 1))
+make_vault "$@"
+FILE_PATH=$(make_journal_path "$name")
 
-$EDITOR "$(make_journal_name)"
+$EDITOR "$FILE_PATH"
