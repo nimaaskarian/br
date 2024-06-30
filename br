@@ -18,7 +18,6 @@ edit_encrypted() {
   
   if [ -f "$name.gpg" ]; then
     sh -c "$(make_gpg_cmd "$DECRYPT_CMD" "$TMP" "$name.gpg")"
-    gpg -d "$name.gpg" > "$TMP"
   fi
   before=$(cat "$TMP")
   $EDITOR_ "$TMP"
