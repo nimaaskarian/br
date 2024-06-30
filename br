@@ -1,9 +1,11 @@
 #!/bin/sh
 CONFIG_DIR=${XDG_CONFIG_HOME:-${HOME}/.config}/br
 
+
 source_config() {
-  if [ -f "$CONFIG_DIR/brrc" ]; then
-    . "$CONFIG_DIR/brrc"
+  config_file="$1"
+  if [ -f "$config_file" ]; then
+    . "$config_file"
   fi
 }
 
@@ -17,13 +19,13 @@ edit_encrypted() {
   TMP=$(mktemp --suffix "$SUFFIX")
   
   if [ -f "$name.gpg" ]; then
-    sh -c "$(make_gpg_cmd "$DECRYPT_CMD" "$TMP" "$name.gpg")"
+    eval "$(make_gpg_cmd "$DECRYPT_CMD" "$TMP" "$name.gpg")"
   fi
   before=$(cat "$TMP")
   $EDITOR_ "$TMP"
   after=$(cat "$TMP")
   if ! [ "$before" = "$after" ]; then
-    sh -c "$(make_gpg_cmd "$ENCRYPT_CMD" "$TMP" "$name.gpg")"
+    eval "$(make_gpg_cmd "$ENCRYPT_CMD" "$TMP" "$name.gpg")"
   fi
   rm "$TMP"
 }
@@ -47,7 +49,6 @@ make_vault() {
 }
 
 set_encrypted_editor() {
-  echo $EDITOR
   EDITOR_=$EDITOR
   EDITOR=edit_encrypted
 }
@@ -101,10 +102,12 @@ print_help() {
   print "\t\tPrint the path of current vault"
   print "\t-S"
   print "\t\tSync br vault with IP"
+  print "\t-c"
+  print "\t\tLoad a config file over the default config and cli options (arguments will replace cli options)"
 }
 
-source_config "$@"
-while getopts "z:hn:sS:ledjJp:" option; do
+source_config "$CONFIG_DIR/brrc"
+while getopts "z:hn:sS:ledjJp:c:" option; do
   case $option in 
     h) 
       print_help
@@ -112,12 +115,14 @@ while getopts "z:hn:sS:ledjJp:" option; do
     n) 
       notemode=1
       NAME=${OPTARG};;
+    c) 
+      config=${OPTARG};;
     s)
-      search_vault "$VAULT";;
+      search_cmd="search_vault \$VAULT";;
     j)
-      search_vault "$VAULT" "--max-depth 1";;
+      search_cmd="search_vault \$VAULT --max-depth=1";;
     J)
-      search_vault "$VAULT/notes";;
+      search_cmd="search_vault \$VAULT/notes";;
     l) 
       EDITOR=${PAGER:-less};;
     e) 
@@ -139,8 +144,11 @@ while getopts "z:hn:sS:ledjJp:" option; do
       exit 1;;
   esac
 done
+source_config "$config"
+
 shift $((OPTIND - 1))
 make_vault "$@"
+[ "$search_cmd" ] && eval "$search_cmd"
 FILE_PATH=${FILE_PATH:-$(make_journal_path "$NAME")}
 if [ "$ENCRYPTED" = 1 ]; then
   set_encrypted_editor
