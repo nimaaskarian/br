@@ -17,14 +17,14 @@ edit_encrypted() {
   TMP=$(mktemp --suffix "$SUFFIX")
   
   if [ -f "$name.gpg" ]; then
-    sh -c "$(make_gpg_cmd "$GPG_DECRYPT_CMD" "$TMP" "$name.gpg")"
+    sh -c "$(make_gpg_cmd "$DECRYPT_CMD" "$TMP" "$name.gpg")"
     gpg -d "$name.gpg" > "$TMP"
   fi
   before=$(cat "$TMP")
   $EDITOR_ "$TMP"
   after=$(cat "$TMP")
   if ! [ "$before" = "$after" ]; then
-    sh -c "$(make_gpg_cmd "$GPG_ENCRYPT_CMD" "$TMP" "$name.gpg")"
+    sh -c "$(make_gpg_cmd "$ENCRYPT_CMD" "$TMP" "$name.gpg")"
   fi
   rm "$TMP"
 }
