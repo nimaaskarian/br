@@ -3,7 +3,7 @@ CONFIG_DIR=${XDG_CONFIG_HOME:-${HOME}/.config}/br
 
 source_config() {
   if [ -f "$CONFIG_DIR/brrc" ]; then
-    . $CONFIG_DIR/brrc
+    . "$CONFIG_DIR/brrc"
   fi
 }
 
@@ -46,11 +46,20 @@ set_encrypted_editor() {
 }
 
 search_vault() {
-  name=$(fd -tf --base-directory "$1" $2 | fzf --tac) || exit 1
+  name=$(fd -tf -H --base-directory "$1" $2 | fzf --tac) || exit 1
   if echo "$name" | grep '.gpg$'; then
     ENCRYPTED=1
   fi
   FILE_PATH="$1/$name"
+}
+
+zip_vault() {
+  zip -r "$1" "$VAULT"
+}
+
+sync_vault() {
+  ip=$1
+  rsync -acvu "$ip:$VAULT/" "$VAULT"
 }
 
 print() {
@@ -69,20 +78,22 @@ print_help() {
   print "\t\tEdit note inside VAULT/notes/<NOTE_NAME>"
   print "\t-s"
   print "\t\tSearch and open journals and notes inside current vault"
-  print "\t-S"
-  print "\t\tSearch and open only notes inside current vault"
   print "\t-j"
   print "\t\tSearch and open only journals inside current vault"
+  print "\t-J"
+  print "\t\tSearch and open only notes inside current vault"
   print "\t-l"
   print "\t\tUse PAGER (less) instead of EDITOR"
   print "\t-e"
   print "\t\tEdit journal/note as encrypted"
   print "\t-d"
   print "\t\tPrint the path of current vault"
+  print "\t-S"
+  print "\t\tSync br vault with IP"
 }
 
 source_config "$@"
-while getopts "hn:sSledj" option; do
+while getopts "z:hn:sS:ledjJ" option; do
   case $option in 
     h) 
       print_help
@@ -94,12 +105,18 @@ while getopts "hn:sSledj" option; do
       search_vault "$VAULT";;
     j)
       search_vault "$VAULT" "--max-depth 1";;
-    S)
+    J)
       search_vault "$VAULT/notes";;
     l) 
       EDITOR=${PAGER:-less};;
     e) 
       ENCRYPTED=1;;
+    z) 
+      zip_vault "${OPTARG}"
+      exit;;
+    S) 
+      sync_vault "${OPTARG}"
+      exit;;
     d) 
       echo "$VAULT"
       exit;;
