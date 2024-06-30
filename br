@@ -7,17 +7,24 @@ source_config() {
   fi
 }
 
+make_gpg_cmd() {
+    echo "$1" | sed "s+%i+\"$2\"+" | sed "s+%o+\"$3\"+"
+}
+
 edit_encrypted() {
   name=$(printf "%s" "$1" | sed 's+.gpg$++')
+  SUFFIX=.$(echo "$JOURNAL_FORMAT" | sed 's/.*\.//')
   TMP=$(mktemp --suffix "$SUFFIX")
+  
   if [ -f "$name.gpg" ]; then
+    sh -c "$(make_gpg_cmd "$GPG_DECRYPT_CMD" "$TMP" "$name.gpg")"
     gpg -d "$name.gpg" > "$TMP"
   fi
   before=$(cat "$TMP")
   $EDITOR_ "$TMP"
   after=$(cat "$TMP")
   if ! [ "$before" = "$after" ]; then
-    gpg --symmetric --output "$name.gpg" "$TMP"
+    sh -c "$(make_gpg_cmd "$GPG_ENCRYPT_CMD" "$TMP" "$name.gpg")"
   fi
   rm "$TMP"
 }
@@ -41,6 +48,7 @@ make_vault() {
 }
 
 set_encrypted_editor() {
+  echo $EDITOR
   EDITOR_=$EDITOR
   EDITOR=edit_encrypted
 }
@@ -60,6 +68,10 @@ zip_vault() {
 sync_vault() {
   ip=$1
   rsync -acvu "$ip:$VAULT/" "$VAULT"
+}
+
+convert_file_to_doc() {
+  pandoc "$2" -o "$1"
 }
 
 print() {
@@ -93,7 +105,7 @@ print_help() {
 }
 
 source_config "$@"
-while getopts "z:hn:sS:ledjJ" option; do
+while getopts "z:hn:sS:ledjJp:" option; do
   case $option in 
     h) 
       print_help
@@ -120,6 +132,8 @@ while getopts "z:hn:sS:ledjJ" option; do
     d) 
       echo "$VAULT"
       exit;;
+    p) 
+      EDITOR="convert_file_to_doc ${OPTARG}";;
     \?) 
       echo "Error: Invalid option"
       print_help

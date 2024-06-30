@@ -1,7 +1,12 @@
-EDITOR=${EDITOR:-vim}
+# General default config
 ENCRYPTED=0
 VAULT="$HOME/Documents/br-vault"
-DATE="date +%F"
 NAME=journal
 JOURNAL_FORMAT="%d.md"
 NOTE_FORMAT="%d-%n.md"
+
+# Applications
+EDITOR=${EDITOR:-vim}
+DATE="date +%F"
+GPG_ENCRYPT_CMD="gpg --symmetric --output %o %i"
+GPG_DECRYPT_CMD="gpg -d %o > %i"
