@@ -143,9 +143,8 @@ while getopts "z:hn:sS:ledjJp:c:P" option; do
     S) 
       sync_vault "${OPTARG}"
       exit;;
-    d) 
-      echo "$VAULT"
-      exit;;
+    d)
+      print_vault=1;;
     p) 
       EDITOR="convert_file_to_doc ${OPTARG}";;
     P) 
@@ -158,6 +157,7 @@ while getopts "z:hn:sS:ledjJp:c:P" option; do
 done
 shift $((OPTIND - 1))
 make_vault "$@"
+[ "$print_vault" = 1 ] && echo "$VAULT" && exit
 [ "$search_cmd" ] && eval "$search_cmd"
 FILE_PATH=${FILE_PATH:-$(make_journal_path "$NAME")}
 if [ "$ENCRYPTED" = 1 ]; then
