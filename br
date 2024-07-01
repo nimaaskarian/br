@@ -27,7 +27,7 @@ edit_encrypted() {
   if ! [ "$before" = "$after" ]; then
     eval "$(make_gpg_cmd "$ENCRYPT_CMD" "$TMP" "$name.gpg")"
   fi
-  rm "$TMP"
+  $REMOVER "$TMP"
 }
 
 make_journal_path() {

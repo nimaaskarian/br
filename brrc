@@ -10,3 +10,4 @@ EDITOR=${EDITOR:-vim}
 DATE="date +%F"
 ENCRYPT_CMD="gpg --symmetric --output %o %i"
 DECRYPT_CMD="gpg -d %o > %i"
+REMOVER="rm"
