@@ -10,12 +10,12 @@ source_config() {
 }
 
 make_gpg_cmd() {
-    echo "$1" | sed "s+%i+\"$2\"+" | sed "s+%o+\"$3\"+"
+  echo "$1" | sed "s+%i+\"$2\"+" | sed "s+%o+\"$3\"+"
 }
 
 edit_encrypted() {
   name=$(printf "%s" "$1" | sed 's+.gpg$++')
-  SUFFIX=.$(echo "$JOURNAL_FORMAT" | sed 's/.*\.//')
+  SUFFIX=".${name##*.}"
   TMP=$(mktemp --suffix "$SUFFIX")
   
   if [ -f "$name.gpg" ]; then
