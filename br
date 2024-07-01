@@ -103,7 +103,7 @@ print_help() {
   print "\t-S"
   print "\t\tSync br vault with IP"
   print "\t-c"
-  print "\t\tLoad a config file over the default config and cli options (arguments will replace cli options)"
+  print "\t\tLoad another config file (arguments will replace cli and config options up to that point)"
 }
 
 source_config "$CONFIG_DIR/brrc"
@@ -116,7 +116,7 @@ while getopts "z:hn:sS:ledjJp:c:" option; do
       notemode=1
       NAME=${OPTARG};;
     c) 
-      config=${OPTARG};;
+      source_config "${OPTARG}";;
     s)
       search_cmd="search_vault \$VAULT";;
     j)
@@ -144,8 +144,6 @@ while getopts "z:hn:sS:ledjJp:c:" option; do
       exit 1;;
   esac
 done
-source_config "$config"
-
 shift $((OPTIND - 1))
 make_vault "$@"
 [ "$search_cmd" ] && eval "$search_cmd"
