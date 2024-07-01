@@ -71,7 +71,13 @@ sync_vault() {
 }
 
 convert_file_to_doc() {
-  pandoc "$2" -o "$1"
+  in=$2
+  out=$1
+  [ "$2" ] || {
+    in=$1
+    out="${1%.*}.pdf"
+  }
+  pandoc "$in" -o "$out"
 }
 
 print() {
@@ -104,10 +110,14 @@ print_help() {
   print "\t\tSync br vault with IP"
   print "\t-c"
   print "\t\tLoad another config file (arguments will replace cli and config options up to that point)"
+  print "\t-p <DOCUMENT_PATH>"
+  print "\t\tConvert selected (today's) journal/note to another format with pandoc"
+  print "\t-P"
+  print "\t\tConvert selected (today's) journal/note to PDF and put it in the vault"
 }
 
 source_config "$CONFIG_DIR/brrc"
-while getopts "z:hn:sS:ledjJp:c:" option; do
+while getopts "z:hn:sS:ledjJp:c:P" option; do
   case $option in 
     h) 
       print_help
@@ -138,6 +148,8 @@ while getopts "z:hn:sS:ledjJp:c:" option; do
       exit;;
     p) 
       EDITOR="convert_file_to_doc ${OPTARG}";;
+    P) 
+      EDITOR="convert_file_to_doc";;
     \?) 
       echo "Error: Invalid option"
       print_help
