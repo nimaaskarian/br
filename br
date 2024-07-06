@@ -13,6 +13,23 @@ make_gpg_cmd() {
   echo "$1" | sed "s+%i+\"$2\"+" | sed "s+%o+\"$3\"+"
 }
 
+rgfzf() {
+  cd "$1" || return 1
+  rg --color=always --line-number --no-heading --smart-case "" \
+  | fzf -d':' --ansi \
+    --preview "bat -p --color=always {1} --highlight-line {2}" \
+    --preview-window ~8,+{2}-5 \
+  | awk -F':' '{print $1}'
+}
+
+edit_rgfzf() {
+  vault=$1
+  name=$(rgfzf "$vault")
+  ! [ $name ] && exit 1
+  resolve_name "$vault" "$name"
+  $EDITOR "$FILE_PATH"
+}
+
 edit_encrypted() {
   name=$(printf "%s" "$1" | sed 's+.gpg$++')
   SUFFIX=".${name##*.}"
@@ -55,6 +72,11 @@ set_encrypted_editor() {
 
 search_vault() {
   name=$(fd -tf -H --base-directory "$1" $2 | fzf --tac) || exit 1
+  resolve_name "$1" "$name"
+}
+
+resolve_name()  {
+  name=$2
   if echo "$name" | grep '.gpg$'; then
     ENCRYPTED=1
   fi
@@ -79,7 +101,20 @@ convert_file_to_doc() {
   }
   pandoc "$in" -o "$out"
 }
-
+convert_daily_pdf() {
+  out="$1"
+  vault="$2"
+  SUFFIX=".${JOURNAL_FORMAT##*.}"
+  TMP=$(mktemp --suffix "$SUFFIX")
+  fd -tf --max-depth 1 -e "$SUFFIX" --base-directory "$vault" | while read -r line; do
+    resolve_name "$vault" "$line"
+    echo "# ${line%%.*}"
+    cat "$FILE_PATH" | sed '/^#/ s/^/#&/' | rg -v '^\\.*'
+    echo
+  done > "$TMP"
+  echo $TMP
+  pandoc "$TMP" -o "$out"
+}
 print() {
   printf "$*\n"
 }
@@ -117,7 +152,7 @@ print_help() {
 }
 
 source_config "$CONFIG_DIR/brrc"
-while getopts "z:hn:sS:ledjJp:c:P" option; do
+while getopts "z:hn:sS:ledjJp:c:PD:t" option; do
   case $option in 
     h) 
       print_help
@@ -125,6 +160,8 @@ while getopts "z:hn:sS:ledjJp:c:P" option; do
     n) 
       notemode=1
       NAME=${OPTARG};;
+    t) 
+      print_vault=edit_rgfzf;;
     c) 
       source_config "${OPTARG}";;
     s)
@@ -144,7 +181,9 @@ while getopts "z:hn:sS:ledjJp:c:P" option; do
       sync_vault "${OPTARG}"
       exit;;
     d)
-      print_vault=1;;
+      print_vault=echo;;
+    D)
+      print_vault="convert_daily_pdf ${OPTARG}";;
     p) 
       EDITOR="convert_file_to_doc ${OPTARG}";;
     P) 
@@ -157,7 +196,8 @@ while getopts "z:hn:sS:ledjJp:c:P" option; do
 done
 shift $((OPTIND - 1))
 make_vault "$@"
-[ "$print_vault" = 1 ] && echo "$VAULT" && exit
+[ "$print_vault" ] && $print_vault "$VAULT" && exit
+
 [ "$search_cmd" ] && eval "$search_cmd"
 FILE_PATH=${FILE_PATH:-$(make_journal_path "$NAME")}
 if [ "$ENCRYPTED" = 1 ]; then
