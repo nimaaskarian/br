@@ -149,6 +149,8 @@ print_help() {
   print "\t\tConvert selected (today's) journal/note to another format with pandoc"
   print "\t-P"
   print "\t\tConvert selected (today's) journal/note to PDF and put it in the vault"
+  print "\t-t"
+  print "\t\tSearch xournals and notes by text inside them"
 }
 
 source_config "$CONFIG_DIR/brrc"
@@ -181,7 +183,7 @@ while getopts "z:hn:sS:ledjJp:c:PD:t" option; do
       sync_vault "${OPTARG}"
       exit;;
     d)
-      print_vault=echo;;
+      print_vault="echo";;
     D)
       print_vault="convert_daily_pdf ${OPTARG}";;
     p) 
