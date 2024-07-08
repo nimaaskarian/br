@@ -101,20 +101,7 @@ convert_file_to_doc() {
   }
   pandoc "$in" -o "$out"
 }
-convert_daily_pdf() {
-  out="$1"
-  vault="$2"
-  SUFFIX=".${JOURNAL_FORMAT##*.}"
-  TMP=$(mktemp --suffix "$SUFFIX")
-  fd -tf --max-depth 1 -e "$SUFFIX" --base-directory "$vault" | while read -r line; do
-    resolve_name "$vault" "$line"
-    echo "# ${line%%.*}"
-    cat "$FILE_PATH" | sed '/^#/ s/^/#&/' | rg -v '^\\.*'
-    echo
-  done > "$TMP"
-  echo $TMP
-  pandoc "$TMP" -o "$out"
-}
+
 print() {
   printf "$*\n"
 }
@@ -141,6 +128,8 @@ print_help() {
   print "\t\tEdit journal/note as encrypted"
   print "\t-d"
   print "\t\tPrint the path of current vault"
+  print "\t-D"
+  print "\t\tPrint the path of selected file"
   print "\t-S"
   print "\t\tSync br vault with IP"
   print "\t-c"
@@ -154,7 +143,7 @@ print_help() {
 }
 
 source_config "$CONFIG_DIR/brrc"
-while getopts "z:hn:sS:ledjJp:c:PD:t" option; do
+while getopts "z:hn:sS:ledjJp:c:PDt" option; do
   case $option in 
     h) 
       print_help
@@ -172,6 +161,9 @@ while getopts "z:hn:sS:ledjJp:c:PD:t" option; do
       search_cmd="search_vault \$VAULT --max-depth=1";;
     J)
       search_cmd="search_vault \$VAULT/notes";;
+    D)
+      EDITOR="echo"
+      search_cmd="search_vault \$VAULT";;
     l) 
       EDITOR=${PAGER:-less};;
     e) 
@@ -184,8 +176,6 @@ while getopts "z:hn:sS:ledjJp:c:PD:t" option; do
       exit;;
     d)
       print_vault="echo";;
-    D)
-      print_vault="convert_daily_pdf ${OPTARG}";;
     p) 
       EDITOR="convert_file_to_doc ${OPTARG}";;
     P) 
