@@ -30,6 +30,24 @@ edit_rgfzf() {
   $EDITOR "$FILE_PATH"
 }
 
+combine_all_journals_to_pdf() {
+  out="$1"
+  vault="$2"
+  SUFFIX=".${JOURNAL_FORMAT##*.}"
+  tmps=$(for file in "$vault"/*"$SUFFIX"; do
+    name=$(basename -s "$SUFFIX" "$file")
+    tmp=$(mktemp --suffix "$SUFFIX")
+    tmp2=$(mktemp --suffix "$SUFFIX")
+    echo "# $name" >> "$tmp"
+    sed 's/^#/##/' "$file" >> "$tmp2"
+    echo "$tmp"
+    echo "$tmp2"
+  done)
+  pandoc -o "$out" $tmps
+  rm $tmps
+  exit 0
+}
+
 edit_encrypted() {
   name=$(printf "%s" "$1" | sed 's+.gpg$++')
   SUFFIX=".${name##*.}"
@@ -139,11 +157,13 @@ print_help() {
   print "\t-P"
   print "\t\tConvert selected (today's) journal/note to PDF and put it in the vault"
   print "\t-t"
-  print "\t\tSearch xournals and notes by text inside them"
+  print "\t\tSearch journals and notes by text inside them"
+  print "\t-A <DOCUMENT_PATH>"
+  print "\t\tConvert all journals to a combined document"
 }
 
 source_config "$CONFIG_DIR/brrc"
-while getopts "z:hn:sS:ledjJp:c:PDt" option; do
+while getopts "z:hn:sS:ledjJp:c:PDtA:" option; do
   case $option in 
     h) 
       print_help
@@ -180,6 +200,8 @@ while getopts "z:hn:sS:ledjJp:c:PDt" option; do
       EDITOR="convert_file_to_doc ${OPTARG}";;
     P) 
       EDITOR="convert_file_to_doc";;
+    A)
+      search_cmd="combine_all_journals_to_pdf ${OPTARG} \$VAULT";;
     \?) 
       echo "Error: Invalid option"
       print_help
