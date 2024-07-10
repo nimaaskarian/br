@@ -25,9 +25,8 @@ rgfzf() {
 edit_rgfzf() {
   vault=$1
   name=$(rgfzf "$vault")
-  ! [ $name ] && exit 1
+  ! [ "$name" ] && exit 1
   resolve_name "$vault" "$name"
-  $EDITOR "$FILE_PATH"
 }
 
 combine_all_journals_to_pdf() {
@@ -172,7 +171,7 @@ while getopts "z:hn:sS:ledjJp:c:PDtA:" option; do
       notemode=1
       NAME=${OPTARG};;
     t) 
-      print_vault=edit_rgfzf;;
+      search_cmd="edit_rgfzf \$VAULT";;
     c) 
       source_config "${OPTARG}";;
     s)
