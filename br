@@ -191,7 +191,7 @@ while getopts "z:hn:sS:ledjJp:c:PDtA:" option; do
       zip_vault "${OPTARG}"
       exit;;
     S) 
-      sync_vault "${OPTARG}"
+      print_vault="sync_vault ${OPTARG}"
       exit;;
     d)
       print_vault="echo";;
