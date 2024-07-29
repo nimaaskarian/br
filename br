@@ -32,8 +32,9 @@ edit_rgfzf() {
 combine_all_journals_to_pdf() {
   out="$1"
   vault="$2"
+  prefix="$3"
   SUFFIX=".${JOURNAL_FORMAT##*.}"
-  tmps=$(for file in "$vault"/*"$SUFFIX"; do
+  tmps=$(for file in "$vault/$prefix"/*"$SUFFIX"; do
     name=$(basename -s "$SUFFIX" "$file")
     tmp=$(mktemp --suffix "$SUFFIX")
     tmp2=$(mktemp --suffix "$SUFFIX")
@@ -162,7 +163,7 @@ print_help() {
 }
 
 source_config "$CONFIG_DIR/brrc"
-while getopts "z:hn:sS:ledjJp:c:PDtA:" option; do
+while getopts "z:hn:sS:ledjJp:c:PDtA:a:" option; do
   case $option in 
     h) 
       print_help
@@ -181,8 +182,7 @@ while getopts "z:hn:sS:ledjJp:c:PDtA:" option; do
     J)
       search_cmd="search_vault \$VAULT/notes";;
     D)
-      EDITOR="echo"
-      search_cmd="search_vault \$VAULT";;
+      EDITOR="echo";;
     l) 
       EDITOR=${PAGER:-less};;
     e) 
@@ -191,7 +191,7 @@ while getopts "z:hn:sS:ledjJp:c:PDtA:" option; do
       zip_vault "${OPTARG}"
       exit;;
     S) 
-      print_vault="sync_vault ${OPTARG}"
+      sync_vault "${OPTARG}"
       exit;;
     d)
       print_vault="echo";;
@@ -201,6 +201,8 @@ while getopts "z:hn:sS:ledjJp:c:PDtA:" option; do
       EDITOR="convert_file_to_doc";;
     A)
       search_cmd="combine_all_journals_to_pdf ${OPTARG} \$VAULT";;
+    a)
+      search_cmd="combine_all_journals_to_pdf ${OPTARG} \$VAULT notes";;
     \?) 
       echo "Error: Invalid option"
       print_help
