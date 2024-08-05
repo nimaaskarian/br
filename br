@@ -71,7 +71,11 @@ make_journal_path() {
     format=${NOTE_FORMAT}
   fi
 
-  name=$(echo "$format" | sed "s/%n/$1/" | sed "s+%d+$($DATE)+")
+  name=$(echo "$format" | sed "s+%n+$1+" | sed "s+%d+$($DATE)+")
+  dir="${VAULT}/$(dirname "$name")"
+  if ! [ -d "$dir" ]; then
+    mkdir -p "$dir"
+  fi
   echo "${VAULT}/$name"
 }
 
