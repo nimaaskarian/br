@@ -1,5 +1,3 @@
 A pretty simple script for writing journals.
 
-`install.sh` doesn't install br, it just sets the configuration (rc file) up.
-To install, copy br to some directory from your path:
-`cp br /usr/bin/`
+Uses a simple Makefile for installing or copying the default config.
