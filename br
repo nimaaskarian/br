@@ -43,7 +43,7 @@ combine_all_journals_to_pdf() {
     echo "$tmp"
     echo "$tmp2"
   done)
-  pandoc -o "$out" $tmps
+  pandoc $PANDOC_OPTS -o "$out" $tmps
   rm $tmps
   exit 0
 }
@@ -121,7 +121,7 @@ convert_file_to_doc() {
     in=$1
     out="${1%.*}.pdf"
   }
-  pandoc "$in" -o "$out"
+  pandoc $PANDOC_OPTS "$in" -o "$out"
 }
 
 print() {

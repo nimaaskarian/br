@@ -8,6 +8,7 @@ NOTE_FORMAT="%d-%n.md"
 # Applications
 EDITOR=${EDITOR:-vim}
 DATE="date +%F"
+PANDOC_OPTS=""
 ENCRYPT_CMD="gpg --symmetric --output %o %i"
 DECRYPT_CMD="gpg -d %o > %i"
 REMOVER="rm"
