@@ -29,25 +29,6 @@ edit_rgfzf() {
   resolve_name "$vault" "$name"
 }
 
-combine_all_journals_to_pdf() {
-  out="$1"
-  vault="$2"
-  prefix="$3"
-  SUFFIX=".${JOURNAL_FORMAT##*.}"
-  tmps=$(for file in "$vault/$prefix"/*"$SUFFIX"; do
-    name=$(basename -s "$SUFFIX" "$file")
-    tmp=$(mktemp --suffix "$SUFFIX")
-    tmp2=$(mktemp --suffix "$SUFFIX")
-    echo "# $name" >> "$tmp"
-    sed 's/^#/##/' "$file" >> "$tmp2"
-    echo "$tmp"
-    echo "$tmp2"
-  done)
-  pandoc $PANDOC_OPTS -o "$out" $tmps
-  rm $tmps
-  exit 0
-}
-
 edit_encrypted() {
   name=$(printf "%s" "$1" | sed 's+.gpg$++')
   SUFFIX=".${name##*.}"
@@ -67,7 +48,7 @@ edit_encrypted() {
 
 make_journal_path() {
   format=${JOURNAL_FORMAT}
-  if [ "$notemode" = 1 ]; then
+  if [ "$APPEND_DIR" ]; then
     format=${NOTE_FORMAT}
   fi
 
@@ -76,15 +57,12 @@ make_journal_path() {
   if ! [ -d "$dir" ]; then
     mkdir -p "$dir"
   fi
-  echo "${VAULT}/$name"
+  echo "${VAULT}/$APPEND_DIR/$name"
 }
 
 make_vault() {
   VAULT=${1:-$VAULT}
-  if [ "$notemode" = 1 ]; then
-    VAULT=$VAULT/notes
-  fi
-  mkdir "$VAULT" 2> /dev/null
+  mkdir "$VAULT/$APPEND_DIR" 2> /dev/null
 }
 
 set_encrypted_editor() {
@@ -117,10 +95,6 @@ sync_vault() {
 convert_file_to_doc() {
   in=$2
   out=$1
-  [ "$2" ] || {
-    in=$1
-    out="${1%.*}.pdf"
-  }
   pandoc $PANDOC_OPTS "$in" -o "$out"
 }
 
@@ -140,10 +114,6 @@ print_help() {
   print "\t\tEdit note inside VAULT/notes/<NOTE_NAME>"
   print "\t-s"
   print "\t\tSearch and open journals and notes inside current vault"
-  print "\t-j"
-  print "\t\tSearch and open only journals inside current vault"
-  print "\t-J"
-  print "\t\tSearch and open only notes inside current vault"
   print "\t-l"
   print "\t\tUse PAGER (less) instead of EDITOR"
   print "\t-e"
@@ -158,33 +128,27 @@ print_help() {
   print "\t\tLoad another config file (arguments will replace cli and config options up to that point)"
   print "\t-p <DOCUMENT_PATH>"
   print "\t\tConvert selected (today's) journal/note to another format with pandoc"
-  print "\t-P"
-  print "\t\tConvert selected (today's) journal/note to PDF and put it in the vault"
   print "\t-t"
   print "\t\tSearch journals and notes by text inside them"
-  print "\t-A <DOCUMENT_PATH>"
-  print "\t\tConvert all journals to a combined document"
+  print "\t-a"
+  print "\t\tEcho path to all journals"
 }
 
 source_config "$CONFIG_DIR/brrc"
-while getopts "z:hn:sS:ledjJp:c:PDtA:a:" option; do
+while getopts "z:hn:sS:ledp:c:Dta" option; do
   case $option in 
     h) 
       print_help
       exit;;
     n) 
-      notemode=1
+      APPEND_DIR="notes"
       NAME=${OPTARG};;
     t) 
-      search_cmd="edit_rgfzf \$VAULT";;
+      search_cmd='edit_rgfzf $VAULT/$APPEND_DIR';;
     c) 
       source_config "${OPTARG}";;
     s)
-      search_cmd="search_vault \$VAULT";;
-    j)
-      search_cmd="search_vault \$VAULT --max-depth=1";;
-    J)
-      search_cmd="search_vault \$VAULT/notes";;
+      search_cmd='search_vault $VAULT/$APPEND_DIR';;
     D)
       EDITOR="echo";;
     l) 
@@ -201,12 +165,8 @@ while getopts "z:hn:sS:ledjJp:c:PDtA:a:" option; do
       print_vault="echo";;
     p) 
       EDITOR="convert_file_to_doc ${OPTARG}";;
-    P) 
-      EDITOR="convert_file_to_doc";;
-    A)
-      search_cmd="combine_all_journals_to_pdf ${OPTARG} \$VAULT";;
     a)
-      search_cmd="combine_all_journals_to_pdf ${OPTARG} \$VAULT notes";;
+      search_cmd='for item in $VAULT/$APPEND_DIR*.md; do echo "$item"; done; exit 0';;
     \?) 
       echo "Error: Invalid option"
       print_help
