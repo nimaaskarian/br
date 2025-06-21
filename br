@@ -56,20 +56,20 @@ edit_encrypted() {
 }
 
 make_journal_path() {
-  if [ "$BR_NAME" ] && [ -d "$BR_VAULT/${BR_NAME}" ]; then
-    name=$BR_NAME/$($BR_DATE)
-  elif [ "$BR_NAME" ]; then
-    name=$BR_NAME
-
+  if [ "$BR_NAME" ] ; then
+    if [ -d "$BR_VAULT/${BR_NAME}" ]; then
+      BR_VAULT=$BR_VAULT/$BR_NAME
+      BR_NAME=$($BR_DATE)
+    fi
   else
-    name=$($BR_DATE)
+    BR_NAME=$($BR_DATE)
   fi
+  BR_NAME=$BR_NAME.md
 
-  dir="${BR_VAULT}/$(dirname "$name")"
+  dir="${BR_VAULT}/$(dirname "$BR_NAME")"
   if ! [ -d "$dir" ]; then
     mkdir -p "$dir"
   fi
-  echo "${BR_VAULT}/$name.md"
 }
 
 set_encrypted_editor() {
@@ -87,7 +87,8 @@ resolve_name()  {
   if echo "$name" | grep '.gpg$'; then
     BR_ENCRYPTED=1
   fi
-  FILE_PATH="$1/$name"
+  BR_VAULT=$1
+  BR_NAME=$name
 }
 
 zip_vault() {
@@ -103,7 +104,7 @@ convert_file_to_doc() {
 usage() {
   cat << EOF
 Usage:
-  br [OPTIONS] [NAME]
+  br [OPTIONS] [COMMAND]
 
 Arguments:
    [VAULT_PATH] Path to vault directory
@@ -117,7 +118,9 @@ Options:
   -v <BR_VAULT> 
     use <BR_VAULT> as vault
   -l
-    Use PAGER (less) instead of EDITOR
+    Use PAGER
+  -g
+    Use glow -p
   -e
     Edit journal/note as encrypted
   -d
@@ -135,7 +138,7 @@ Options:
 EOF
 }
 
-while getopts ":hn:lec:v:p" option; do
+while getopts ":hn:lec:v:pg" option; do
   case $option in 
     h) 
       usage
@@ -151,30 +154,32 @@ while getopts ":hn:lec:v:p" option; do
       EDITOR="echo";;
     l) 
       EDITOR=${PAGER:-less};;
+    g) 
+      EDITOR="glow -p";;
     e) 
       BR_ENCRYPTED=1;;
     \?) 
       fatal invalid option
   esac
 done
+make_journal_path
 shift $((OPTIND - 1))
 mkdir -p "$BR_VAULT" 2> /dev/null
 if [ -n "$1" ]; then
   case $1 in 
-    grep) 
+    rg) 
       edit_rgfzf "$BR_VAULT";;
     search)
       search_vault "$BR_VAULT";;
-    ls)
-      fd -tf -e md . "$BR_VAULT" --color never
-      exit 0
+    content)
+      fd -tf -e md . "$BR_VAULT" --exec cat
+      exit
       ;;
     pandoc) 
       [ -z "$2" ] && {
         fatal pandoc requires an argument
       }
       EDITOR="convert_file_to_doc $2"
-      exit
       ;;
     parad)
       mkdir "$BR_VAULT"/{projects,areas,resources,archives,diary}
@@ -189,9 +194,10 @@ if [ -n "$1" ]; then
       ;;
     lscmd)
       cat << EOF
-grep
+rg
 search
 ls
+content
 pandoc
 zip
 parad
@@ -201,9 +207,8 @@ exit
 ;;
   esac
 fi
-FILE_PATH=${FILE_PATH:-$(make_journal_path)}
 if [ "$BR_ENCRYPTED" = 1 ]; then
   set_encrypted_editor
 fi
 
-$EDITOR "$FILE_PATH"
+$EDITOR "$BR_VAULT/$BR_NAME"
