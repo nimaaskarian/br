@@ -1,6 +1,15 @@
-#!/bin/sh
-CONFIG_DIR=${XDG_CONFIG_HOME:-${HOME}/.config}/br
+#!/usr/bin/env bash
+BR_ENCRYPTED=${BR_ENCRYPTED:-0}
+BR_VAULT=${BR_VAULT:-"$HOME/Documents/br-vault"}
+BR_DATE=${BR_DATE:-"date +%F"}
+BR_ENCRYPT=${BR_ENCRYPT_CMD:-"gpg --symmetric --output %o %i"}
+BR_DECRYPT=${BR_DECRYPT_CMD:-"gpg -d %o > %i"}
+BR_REMOVER=${BR_REMOVER:-"rm"}
 
+fatal() {
+  1>&2 echo Error: "$@"
+  exit 1
+}
 
 source_config() {
   config_file="$1"
@@ -15,7 +24,7 @@ make_gpg_cmd() {
 
 rgfzf() {
   cd "$1" || return 1
-  rg --color=always --line-number --no-heading --smart-case "" \
+  rg --color=always --line-number --no-heading --smart-case -v '^\s*$' \
   | fzf -d':' --ansi \
     --preview "bat -p --color=always {1} --highlight-line {2}" \
     --preview-window ~8,+{2}-5 \
@@ -35,34 +44,32 @@ edit_encrypted() {
   TMP=$(mktemp --suffix "$SUFFIX")
   
   if [ -f "$name.gpg" ]; then
-    eval "$(make_gpg_cmd "$DECRYPT_CMD" "$TMP" "$name.gpg")"
+    eval "$(make_gpg_cmd "$BR_DECRYPT" "$TMP" "$name.gpg")"
   fi
   before=$(cat "$TMP")
   $EDITOR_ "$TMP"
   after=$(cat "$TMP")
   if ! [ "$before" = "$after" ]; then
-    eval "$(make_gpg_cmd "$ENCRYPT_CMD" "$TMP" "$name.gpg")"
+    eval "$(make_gpg_cmd "$BR_ENCRYPT" "$TMP" "$name.gpg")"
   fi
-  $REMOVER "$TMP"
+  $BR_REMOVER "$TMP"
 }
 
 make_journal_path() {
-  format=${JOURNAL_FORMAT}
-  if [ "$APPEND_DIR" ]; then
-    format=${NOTE_FORMAT}
+  if [ "$BR_NAME" ] && [ -d "$BR_VAULT/${BR_NAME}" ]; then
+    name=$BR_NAME/$($BR_DATE)
+  elif [ "$BR_NAME" ]; then
+    name=$BR_NAME
+
+  else
+    name=$($BR_DATE)
   fi
 
-  name=$(echo "$format" | sed "s+%n+$1+" | sed "s+%d+$($DATE)+")
-  dir="${VAULT}/$(dirname "$name")"
+  dir="${BR_VAULT}/$(dirname "$name")"
   if ! [ -d "$dir" ]; then
     mkdir -p "$dir"
   fi
-  echo "${VAULT}/$APPEND_DIR/$name"
-}
-
-make_vault() {
-  VAULT=${1:-$VAULT}
-  mkdir "$VAULT/$APPEND_DIR" 2> /dev/null
+  echo "${BR_VAULT}/$name.md"
 }
 
 set_encrypted_editor() {
@@ -78,18 +85,13 @@ search_vault() {
 resolve_name()  {
   name=$2
   if echo "$name" | grep '.gpg$'; then
-    ENCRYPTED=1
+    BR_ENCRYPTED=1
   fi
   FILE_PATH="$1/$name"
 }
 
 zip_vault() {
-  zip -r "$1" "$VAULT"
-}
-
-sync_vault() {
-  ip=$1
-  rsync -acvu "$ip:$VAULT/" "$VAULT"
+  zip -r "$1" "$BR_VAULT"
 }
 
 convert_file_to_doc() {
@@ -98,88 +100,109 @@ convert_file_to_doc() {
   pandoc $PANDOC_OPTS "$in" -o "$out"
 }
 
-print() {
-  printf "$*\n"
+usage() {
+  cat << EOF
+Usage:
+  br [OPTIONS] [NAME]
+
+Arguments:
+   [VAULT_PATH] Path to vault directory
+
+Commands:
+$(br lscmd)
+
+Options:
+  -n <NAME>
+    Edit named journal
+  -v <BR_VAULT> 
+    use <BR_VAULT> as vault
+  -l
+    Use PAGER (less) instead of EDITOR
+  -e
+    Edit journal/note as encrypted
+  -d
+    Print the path of current vault
+  -D
+    Print the path of selected file
+  -c
+    Load another config file (arguments will replace cli and config options up to that point)
+  -p
+    Use "echo" as EDITOR (print the name of the file)
+  -t
+    Search journals and notes by text inside them
+  -a
+    Echo path to all journals
+EOF
 }
 
-print_help() {
-  print "Usage:"
-  print "\tbr [OPTIONS] [VAULT_PATH]"
-  print
-  print "Arguments:"
-  print "\t [VAULT_PATH] Path to vault directory"
-  print
-  print "Options:"
-  print "\t-n <NOTE_NAME>"
-  print "\t\tEdit note inside VAULT/notes/<NOTE_NAME>"
-  print "\t-s"
-  print "\t\tSearch and open journals and notes inside current vault"
-  print "\t-l"
-  print "\t\tUse PAGER (less) instead of EDITOR"
-  print "\t-e"
-  print "\t\tEdit journal/note as encrypted"
-  print "\t-d"
-  print "\t\tPrint the path of current vault"
-  print "\t-D"
-  print "\t\tPrint the path of selected file"
-  print "\t-S"
-  print "\t\tSync br vault with IP"
-  print "\t-c"
-  print "\t\tLoad another config file (arguments will replace cli and config options up to that point)"
-  print "\t-p <DOCUMENT_PATH>"
-  print "\t\tConvert selected (today's) journal/note to another format with pandoc"
-  print "\t-t"
-  print "\t\tSearch journals and notes by text inside them"
-  print "\t-a"
-  print "\t\tEcho path to all journals"
-}
-
-source_config "$CONFIG_DIR/brrc"
-while getopts "z:hn:sS:ledp:c:Dta" option; do
+while getopts ":hn:lec:v:p" option; do
   case $option in 
     h) 
-      print_help
+      usage
       exit;;
+    v)
+      BR_VAULT=${OPTARG};;
     n) 
-      APPEND_DIR="notes"
-      NAME=${OPTARG};;
-    t) 
-      search_cmd='edit_rgfzf $VAULT/$APPEND_DIR';;
+      BR_NAME=${OPTARG}
+      ;;
     c) 
       source_config "${OPTARG}";;
-    s)
-      search_cmd='search_vault $VAULT/$APPEND_DIR';;
-    D)
+    p)
       EDITOR="echo";;
     l) 
       EDITOR=${PAGER:-less};;
     e) 
-      ENCRYPTED=1;;
-    z) 
-      zip_vault "${OPTARG}"
-      exit;;
-    S) 
-      sync_vault "${OPTARG}"
-      exit;;
-    d)
-      print_vault="echo";;
-    p) 
-      EDITOR="convert_file_to_doc ${OPTARG}";;
-    a)
-      search_cmd='for item in $VAULT/$APPEND_DIR*.md; do echo "$item"; done; exit 0';;
+      BR_ENCRYPTED=1;;
     \?) 
-      echo "Error: Invalid option"
-      print_help
-      exit 1;;
+      fatal invalid option
   esac
 done
 shift $((OPTIND - 1))
-make_vault "$@"
-[ "$print_vault" ] && $print_vault "$VAULT" && exit
-
-[ "$search_cmd" ] && eval "$search_cmd"
-FILE_PATH=${FILE_PATH:-$(make_journal_path "$NAME")}
-if [ "$ENCRYPTED" = 1 ]; then
+mkdir -p "$BR_VAULT" 2> /dev/null
+if [ -n "$1" ]; then
+  case $1 in 
+    grep) 
+      edit_rgfzf "$BR_VAULT";;
+    search)
+      search_vault "$BR_VAULT";;
+    ls)
+      fd -tf -e md . "$BR_VAULT" --color never
+      exit 0
+      ;;
+    pandoc) 
+      [ -z "$2" ] && {
+        fatal pandoc requires an argument
+      }
+      EDITOR="convert_file_to_doc $2"
+      exit
+      ;;
+    parad)
+      mkdir "$BR_VAULT"/{projects,areas,resources,archives,diary}
+      exit
+      ;;
+    zip)
+      [ -z "$2" ] && {
+        fatal zip requires an argument
+      }
+      zip_vault "$2"
+      exit
+      ;;
+    lscmd)
+      cat << EOF
+grep
+search
+ls
+pandoc
+zip
+parad
+lscmd
+EOF
+exit
+;;
+  esac
+fi
+FILE_PATH=${FILE_PATH:-$(make_journal_path)}
+if [ "$BR_ENCRYPTED" = 1 ]; then
   set_encrypted_editor
 fi
 
