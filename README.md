@@ -7,6 +7,7 @@ PARA is a way of organizing your thoughts and goals, presented in Building A
 Second Brain book by Tiago Forte.
 
 it has four categories, Projects, Areas, Resources and Archives.
+if you wanna learn more about PARA, read the book. its awesome.
 
 `br` fully supports a customized version of this, that i call "PARAD". it als
 can be initilized with PARAD (a customized version of PARA, presented in the
