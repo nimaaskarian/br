@@ -65,6 +65,9 @@ make_journal_path() {
     BR_NAME=$($BR_DATE)
   fi
   BR_NAME=$BR_NAME.md
+  [ "$TAG" ] && {
+    BR_NAME=""
+  }
 
   dir="${BR_VAULT}/$(dirname "$BR_NAME")"
   if ! [ -d "$dir" ]; then
@@ -78,7 +81,7 @@ set_encrypted_editor() {
 }
 
 search_vault() {
-  name=$(fd -tf -H --base-directory "$1" $2 | fzf --tac) || exit 1
+  name=$(fd -tf -tl -H --base-directory "$1" $2 | fzf --tac) || exit 1
   resolve_name "$1" "$name"
 }
 
@@ -128,19 +131,23 @@ Options:
   -p
     Use "echo" as EDITOR (print the name of the file)
   -t
-    Search journals and notes by text inside them
+    Select a tag
   -a
     Echo path to all journals
 EOF
 }
 
-while getopts ":hn:lec:v:pg" option; do
+while getopts "t:hn:lec:v:pg" option; do
   case $option in 
     h) 
       usage
       exit;;
     v)
       BR_VAULT=${OPTARG};;
+    t)
+      TAG=1
+      BR_VAULT=$BR_VAULT/.tags/${OPTARG}
+    ;;
     n) 
       BR_NAME=${OPTARG}
       ;;
@@ -168,21 +175,36 @@ if [ -n "$1" ]; then
     search)
       search_vault "$BR_VAULT";;
     exec-batch)
-      fd -tf . --base-directory "$BR_VAULT" --color never --exec-batch "${@:2}"
+      fd -tf -tl . --base-directory "$BR_VAULT" --color never --exec-batch "${@:2}"
+      exit
+    ;;
+    edit)
+      fd -tf -tl -e md . "$BR_VAULT" --exec-batch $EDITOR
+      exit
+    ;;
+    tag)
+      [ -z "$2" ] && {
+        fatal "tag requires at least an argument (a tag)"
+      }
+      for tag in "${@:2}"; do
+        tagdir="$BR_VAULT/.tags/$tag"
+        mkdir -p "$tagdir"
+        ln -s "$BR_VAULT/$BR_NAME" "$tagdir"
+      done
       exit
     ;;
     content)
-      fd -tf -e md . "$BR_VAULT" --exec cat
+      fd -tf -tl -e md . "$BR_VAULT" --exec-batch cat
       exit
       ;;
-    pandoc) 
+    pandoc)
       [ -z "$2" ] && {
         fatal pandoc requires an argument
       }
       EDITOR="convert_file_to_doc $2"
       ;;
-    parad)
-      mkdir "$BR_VAULT"/{projects,areas,resources,archives,diary}
+    init)
+      mkdir -p "$BR_VAULT"/{projects,areas,resources,archives,diary,.tags}
       exit
       ;;
     zip)
@@ -197,10 +219,13 @@ if [ -n "$1" ]; then
 rg
 search
 exec-batch
+open
+tag
+edit
 content
 pandoc
 zip
-parad
+init
 lscmd
 EOF
 exit

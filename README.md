@@ -14,7 +14,12 @@ can be initilized with PARAD (a customized version of PARA, presented in the
 book Building A Second Brain, with diaries). but actually supports any way of
 categorizing that you prefer.
 
-you can use `br parad` to initialize a PARAD structure inside your br vault.
+you can use `br init` to initialize a PARAD structure inside your br vault.
+
+## tags
+you also may need tags, tags are handled via symlinks. `br init` also creates a
+`.tags` directory inside your br vault.
+
 
 ## naming
 there are two types of entries in term of their naming. named or dated.
