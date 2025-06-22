@@ -91,10 +91,6 @@ resolve_name()  {
   BR_NAME=$name
 }
 
-zip_vault() {
-  zip -r "$1" "$BR_VAULT"
-}
-
 convert_file_to_doc() {
   in=$2
   out=$1
@@ -171,6 +167,10 @@ if [ -n "$1" ]; then
       edit_rgfzf "$BR_VAULT";;
     search)
       search_vault "$BR_VAULT";;
+    exec-batch)
+      fd -tf . --base-directory "$BR_VAULT" --color never --exec-batch "${@:2}"
+      exit
+    ;;
     content)
       fd -tf -e md . "$BR_VAULT" --exec cat
       exit
@@ -189,14 +189,14 @@ if [ -n "$1" ]; then
       [ -z "$2" ] && {
         fatal zip requires an argument
       }
-      zip_vault "$2"
+      zip -r "$2" "$BR_VAULT"
       exit
       ;;
     lscmd)
       cat << EOF
 rg
 search
-ls
+exec-batch
 content
 pandoc
 zip
