@@ -128,7 +128,7 @@ Options:
   -D
     Print the path of selected file
   -c
-    Load another config file (arguments will replace cli and config options up to that point)
+    Use cat as EDITOR
   -p
     Use "echo" as EDITOR (print the name of the file)
   -t
@@ -148,14 +148,14 @@ while getopts ":hn:lec:v:pg" option; do
     n) 
       BR_NAME=${OPTARG}
       ;;
-    c) 
-      source_config "${OPTARG}";;
     p)
       EDITOR="echo";;
     l) 
       EDITOR=${PAGER:-less};;
     g) 
       EDITOR="glow -p";;
+    c) 
+      EDITOR="cat";;
     e) 
       BR_ENCRYPTED=1;;
     \?) 
