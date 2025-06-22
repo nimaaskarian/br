@@ -178,6 +178,10 @@ if [ -n "$1" ]; then
       fd -tf -tl . --base-directory "$BR_VAULT" --color never --exec-batch "${@:2}"
       exit
     ;;
+    ls)
+      fd -td -tf . --base-directory "$BR_VAULT" --color never | sed 's+\..*++'
+      exit
+    ;;
     edit)
       fd -tf -tl -e md . "$BR_VAULT" --exec-batch $EDITOR
       exit
@@ -219,7 +223,7 @@ if [ -n "$1" ]; then
 rg
 search
 exec-batch
-open
+ls
 tag
 edit
 content
@@ -230,6 +234,9 @@ lscmd
 EOF
 exit
 ;;
+  *)
+    fatal command "\"$1\"" not found
+  ;;
   esac
 fi
 if [ "$BR_ENCRYPTED" = 1 ]; then

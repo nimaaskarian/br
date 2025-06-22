@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 
-sel=$(fd -td -tf --base-directory "$BR_VAULT" | sed "s+\..*++" | dmenu "$@") || exit 1
+sel=$(br ls | dmenu "$@") || exit 1
 
 case $TERM in
   alacritty)
-    alacritty msg create-window -e br -n "$sel"
+    alacritty msg create-window -e br -n $sel
     ;;
   *)
-    $TERM -e br -n "$sel"
+    $TERM -e br -n $sel
     ;;
 esac

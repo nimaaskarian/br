@@ -55,3 +55,6 @@ BR_DECRYPT=${BR_DECRYPT:-"gpg -d %o > %i"}
 # command to remove tmp files of encrypted entries. `shred -u` is more secure.
 BR_REMOVER=${BR_REMOVER:-"rm"}
 ```
+
+# installation
+you can use `make install` to install `br`, `brmenu` and `br.fish`.
