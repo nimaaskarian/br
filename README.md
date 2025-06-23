@@ -1,4 +1,4 @@
-A pretty simple bash script for buildign a second `br`ain.
+A pretty simple bash script for building a second `br`ain.
 
 # ideas
 
@@ -9,8 +9,8 @@ Second Brain book by Tiago Forte.
 it has four categories, Projects, Areas, Resources and Archives.
 if you wanna learn more about PARA, read the book. its awesome.
 
-`br` fully supports a customized version of this, that i call "PARAD". it als
-can be initilized with PARAD (a customized version of PARA, presented in the
+`br` fully supports a customized version of this, that i call "PARAD". it also
+can be initialized with PARAD (a customized version of PARA, presented in the
 book Building A Second Brain, with diaries). but actually supports any way of
 categorizing that you prefer.
 
@@ -62,4 +62,4 @@ you can use `make install` to install `br`, `brmenu` and `br.fish`.
 ## dependencies
 - most of the commands depend on `fd`
 - search and rg commands depend on `fzf`.
-- rg command depends on `rg`.
+- rg command depends on `rg` and `cat`.
