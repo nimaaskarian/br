@@ -58,3 +58,8 @@ BR_REMOVER=${BR_REMOVER:-"rm"}
 
 # installation
 you can use `make install` to install `br`, `brmenu` and `br.fish`.
+
+## dependencies
+- most of the commands depend on `fd`
+- search and rg commands depend on `fzf`.
+- rg command depends on `rg`.
