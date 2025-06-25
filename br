@@ -123,9 +123,7 @@ Options:
   -e
     Edit journal/note as encrypted
   -d
-    Print the path of current vault
-  -D
-    Print the path of selected file
+    Set current date (passed as a --date argument to BR_DATE)
   -c
     Use cat as EDITOR
   -p
@@ -137,13 +135,15 @@ Options:
 EOF
 }
 
-while getopts "t:hn:lec:v:pg" option; do
+while getopts "t:hn:lec:v:pgd:" option; do
   case $option in 
     h) 
       usage
       exit;;
     v)
       BR_VAULT=${OPTARG};;
+    d)
+      BR_DATE="$BR_DATE --date=${OPTARG}";;
     t)
       TAG=1
       BR_VAULT=$BR_VAULT/.tags/${OPTARG}
