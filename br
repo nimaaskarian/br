@@ -64,6 +64,9 @@ make_journal_path() {
   else
     BR_NAME=$($BR_DATE)$BR_SUFFIX
   fi
+  [[ "$BR_NAME" != *"$BR_SUFFIX" ]] && {
+    BR_NAME=$BR_NAME$BR_SUFFIX
+  }
   [ "$TAG" ] && {
     BR_NAME=""
   }
@@ -229,7 +232,7 @@ exit
   ;;
   esac
 fi
-if [ "$BR_ENCRYPTED" = 1 ] || [[ "$BR_NAME" = *$BR_ENCRYPTED_SUFFIX ]]; then
+if [ "$BR_ENCRYPTED" = 1 ] || [[ "$BR_NAME" = *"$BR_ENCRYPTED_SUFFIX" ]]; then
   set_encrypted_editor
 fi
 

@@ -42,7 +42,7 @@ learn more in [config](#config) section.
 you can use the variables below to config br.
 
 ```bash
-# is encrypted by default
+# is encrypted by default (0 or 1)
 BR_ENCRYPTED=${BR_ENCRYPTED:-0}
 # path to br vault
 BR_VAULT=${BR_VAULT:-"$HOME/Documents/br-vault"}
@@ -54,6 +54,12 @@ BR_ENCRYPT=${BR_ENCRYPT:-"gpg --symmetric --output %o %i"}
 BR_DECRYPT=${BR_DECRYPT:-"gpg -d %o > %i"}
 # command to remove tmp files of encrypted entries. `shred -u` is more secure.
 BR_REMOVER=${BR_REMOVER:-"rm"}
+# suffix of encrypted files, if the file being opened is matched on this,
+# BR_ENCRYPTED is assumed to be 1
+BR_ENCRYPTED_SUFFIX=${BR_ENCRYPTED_SUFFIX:-".gpg"}
+# suffix to add to dated files, and to named files if they don't already match
+# it.
+BR_SUFFIX=${BR_SUFFIX:-".md"}
 ```
 
 # installation
