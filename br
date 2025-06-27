@@ -5,6 +5,8 @@ BR_DATE=${BR_DATE:-"date +%F"}
 BR_ENCRYPT=${BR_ENCRYPT_CMD:-"gpg --symmetric --output %o %i"}
 BR_DECRYPT=${BR_DECRYPT_CMD:-"gpg -d %o > %i"}
 BR_REMOVER=${BR_REMOVER:-"rm"}
+BR_ENCRYPTED_SUFFIX=${BR_ENCRYPTED_SUFFIX:-".gpg"}
+BR_SUFFIX=${BR_SUFFIX:-".md"}
 
 fatal() {
   1>&2 echo Error: "$@"
@@ -32,10 +34,8 @@ rgfzf() {
 }
 
 edit_rgfzf() {
-  vault=$1
-  name=$(rgfzf "$vault")
-  ! [ "$name" ] && exit 1
-  resolve_name "$vault" "$name"
+  name=$(rgfzf "$1") || exit 1
+  BR_NAME="$name"
 }
 
 edit_encrypted() {
@@ -59,12 +59,11 @@ make_journal_path() {
   if [ "$BR_NAME" ] ; then
     if [ -d "$BR_VAULT/${BR_NAME}" ]; then
       BR_VAULT=$BR_VAULT/$BR_NAME
-      BR_NAME=$($BR_DATE)
+      BR_NAME=$($BR_DATE)$BR_SUFFIX
     fi
   else
-    BR_NAME=$($BR_DATE)
+    BR_NAME=$($BR_DATE)$BR_SUFFIX
   fi
-  BR_NAME=$BR_NAME.md
   [ "$TAG" ] && {
     BR_NAME=""
   }
@@ -82,16 +81,7 @@ set_encrypted_editor() {
 
 search_vault() {
   name=$(fd -tf -tl -H --base-directory "$1" $2 | fzf --tac) || exit 1
-  resolve_name "$1" "$name"
-}
-
-resolve_name()  {
-  name=$2
-  if echo "$name" | grep '.gpg$'; then
-    BR_ENCRYPTED=1
-  fi
-  BR_VAULT=$1
-  BR_NAME=$name
+  BR_NAME="$name"
 }
 
 convert_file_to_doc() {
@@ -179,7 +169,7 @@ if [ -n "$1" ]; then
       exit
     ;;
     ls)
-      fd -td -tf . --base-directory "$BR_VAULT" --color never | sed 's+\..*++'
+      fd -td -tf . --base-directory "$BR_VAULT" --color never
       exit
     ;;
     edit)
@@ -239,7 +229,7 @@ exit
   ;;
   esac
 fi
-if [ "$BR_ENCRYPTED" = 1 ]; then
+if [ "$BR_ENCRYPTED" = 1 ] || [[ "$BR_NAME" = *$BR_ENCRYPTED_SUFFIX ]]; then
   set_encrypted_editor
 fi
 
