@@ -176,7 +176,7 @@ if [ -n "$1" ]; then
       exit
     ;;
     edit)
-      fd -tf -tl -e md . "$BR_VAULT" --exec-batch $EDITOR
+      fd -tf -tl . "$BR_VAULT" --exec-batch $EDITOR
       exit
     ;;
     tag)
@@ -191,7 +191,7 @@ if [ -n "$1" ]; then
       exit
     ;;
     content)
-      fd -tf -tl -e md . "$BR_VAULT" --exec-batch cat
+      fd -tf -tl . "$BR_VAULT" --exec-batch cat
       exit
       ;;
     pandoc)
