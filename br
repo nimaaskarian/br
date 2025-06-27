@@ -64,7 +64,7 @@ make_journal_path() {
   else
     BR_NAME=$($BR_DATE)
   fi
-  [[ "$BR_NAME" != *"$BR_SUFFIX" ]] && {
+  [[ "$BR_NAME" != *"$BR_SUFFIX" ]] && [[ "$BR_NAME" != *"$BR_SUFFIX$BR_ENCRYPTED_SUFFIX" ]] && {
     BR_NAME=$BR_NAME$BR_SUFFIX
   }
   [ "$TAG" ] && {
