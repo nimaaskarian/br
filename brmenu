@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-sel=$(br ls | dmenu -p br "$@") || exit 1
+sel=$(br ls | dmenu -l 10 -p br "$@") || exit 1
 
 case $TERM in
   alacritty)
