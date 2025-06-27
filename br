@@ -59,10 +59,10 @@ make_journal_path() {
   if [ "$BR_NAME" ] ; then
     if [ -d "$BR_VAULT/${BR_NAME}" ]; then
       BR_VAULT=$BR_VAULT/$BR_NAME
-      BR_NAME=$($BR_DATE)$BR_SUFFIX
+      BR_NAME=$($BR_DATE)
     fi
   else
-    BR_NAME=$($BR_DATE)$BR_SUFFIX
+    BR_NAME=$($BR_DATE)
   fi
   [[ "$BR_NAME" != *"$BR_SUFFIX" ]] && {
     BR_NAME=$BR_NAME$BR_SUFFIX
