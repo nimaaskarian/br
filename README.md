@@ -9,12 +9,9 @@ Second Brain book by Tiago Forte.
 it has four categories, Projects, Areas, Resources and Archives.
 if you wanna learn more about PARA, read the book. its awesome.
 
-`br` fully supports a customized version of this, that i call "PARAD". it also
-can be initialized with PARAD (a customized version of PARA, presented in the
-book Building A Second Brain, with diaries). but actually supports any way of
-categorizing that you prefer.
+`br` fully supports a customized version of this, that i call "PARAD". in addition to PARA, it has a Diary category as well, for daily journaling.
 
-you can use `br init` to initialize a PARAD structure inside your br vault.
+you can use `br init` to initialize a PARAD structure inside your br vault; but br doesn't enforce any kind of structure or way of categorizing. PARAD init only exists because i like it.
 
 ## tags
 you also may need tags, tags are handled via symlinks. `br init` also creates a
