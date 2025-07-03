@@ -7,6 +7,7 @@ BR_DECRYPT=${BR_DECRYPT_CMD:-"gpg -d %o > %i"}
 BR_REMOVER=${BR_REMOVER:-"rm"}
 BR_ENCRYPTED_SUFFIX=${BR_ENCRYPTED_SUFFIX:-".gpg"}
 BR_SUFFIX=${BR_SUFFIX:-".md"}
+BR_VIM=${BR_VIM:-1}
 
 fatal() {
   1>&2 echo Error: "$@"
@@ -30,12 +31,15 @@ rgfzf() {
   | fzf -d':' --ansi \
     --preview "bat -p --color=always {1} --highlight-line {2}" \
     --preview-window ~8,+{2}-5 \
-  | awk -F':' '{print $1}'
+  | cut -d : -f -2
 }
 
 edit_rgfzf() {
-  name=$(rgfzf "$1") || exit 1
-  BR_NAME="$name"
+  IFS=: read -a arr < <(rgfzf "$1" || exit 1)
+  [ $BR_VIM -eq 1 ] && {
+    BR_EDITOR_ARGS+=(+:${arr[1]})
+  }
+  BR_NAME="${arr[0]}"
 }
 
 edit_encrypted() {
@@ -57,7 +61,8 @@ edit_encrypted() {
 
 make_journal_path() {
   if [ "$BR_NAME" ] ; then
-    if [ -d "$BR_VAULT/${BR_NAME}" ]; then
+    # if dir with BR_NAME exists, or BR_NAME ends with "/", BR_NAME is a dir.
+    if [ -d "$BR_VAULT/${BR_NAME}" ] || [[ "$BR_NAME" = */ ]]; then
       BR_VAULT=$BR_VAULT/$BR_NAME
       BR_NAME=$($BR_DATE)
     fi
@@ -236,4 +241,4 @@ if [ "$BR_ENCRYPTED" = 1 ] || [[ "$BR_NAME" = *"$BR_ENCRYPTED_SUFFIX" ]]; then
   set_encrypted_editor
 fi
 
-$EDITOR "$BR_VAULT/$BR_NAME"
+$EDITOR "$BR_VAULT/$BR_NAME" "${BR_EDITOR_ARGS[@]}"

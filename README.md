@@ -60,6 +60,11 @@ BR_ENCRYPTED_SUFFIX=${BR_ENCRYPTED_SUFFIX:-".gpg"}
 # suffix to add to dated files, and to named files if they don't already match
 # it.
 BR_SUFFIX=${BR_SUFFIX:-".md"}
+# EDITOR is vim or its derivatives with similar arguments (1) or not (0)
+BR_VIM=${BR_VIM:-1}
+# array of arguments passed to the editor. BR_VIM=1 variable may add arguments to
+# this in certain situations
+BR_EDITOR_ARGS=()
 ```
 
 # installation
